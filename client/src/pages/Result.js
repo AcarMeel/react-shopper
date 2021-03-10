@@ -1,6 +1,29 @@
+import axios from "axios";
+import LoadingSpinner from "../components/LoadingSpinner";
 import React from "react";
+import { useQuery } from "react-query";
+import useQueryString  from '../utils/useQueryString'
+import { formatCurrencyString } from "use-shopping-cart";
 
 export default function Result() {
+  const queryString = useQueryString();
+  const sessionId = queryString.get('session_id')
+
+  const {data, isLoading, isError } = useQuery('Result', () => sessionId ? 
+  axios.get(`/api/checkout-sessions/${sessionId}`)
+  .then(res => res.data) : null);
+  if (isLoading) return <LoadingSpinner />
+  if (isError)
+    return (
+      <div className="text-red-100 text-center mx-auto font-bold">
+        Error. No purchase found {sessionId}
+      </div>
+    );
+    const total = formatCurrencyString({
+      value: data.amount_total,
+      currency: data.currency,
+      language: 'en-US'
+  })
   return (
     <section className="text-gray-400 bg-gray-900 body-font">
       <div className="container px-5 py-24 mx-auto">
@@ -14,10 +37,10 @@ export default function Result() {
           </p>
           <br />
           <h2 className="text-xl text-indigo-400 tracking-widest font-medium title-font mb-1">
-            Order Total: Amount
+            Order Total: {total}
           </h2>
           <h2 className="text-xl text-indigo-400 tracking-widest font-medium title-font mb-1">
-            Email: Email
+            Email: {data.customer_details.email}
           </h2>
         </div>
       </div>

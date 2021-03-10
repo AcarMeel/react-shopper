@@ -12,6 +12,7 @@ module.exports = function getRoutes() {
   router.get('/products', getProducts)
   router.get('/products/:productId', getProduct)
   router.post('/checkout-sessions', createCheckoutSession)
+  router.get('/checkout-sessions/:sessionId', getCheckoutSession)
 
   return router;
 };
@@ -57,4 +58,17 @@ async function createCheckoutSession(req, res) {
     } catch (error) {
       res.status(500).json({message: error.message, status: 500})
     }
+}
+
+async function getCheckoutSession(req, res) {
+  const {sessionId} = req.params;
+  try {
+    if (!sessionId.startsWith('cs_')) {
+      throw Error(`Incorrect Session ${sessionId}`)
+    }
+    const findSessionId = await stripe.checkout.sessions.retrieve(sessionId, {expand: ['payment_intent']})
+    res.status(200).json(findSessionId)
+  } catch (error) {
+    res.status(500).json({message: error.message, status: 500})
+  }
 }
